@@ -437,40 +437,6 @@ public class FeedbackSessionsLogic {
 
         return new FeedbackSessionQuestionsBundle(fsa, bundle, recipientList);
     }
-    
-    public FeedbackSessionQuestionsBundle getFeedbackSessionQuestionsForStudent(
-            String feedbackSessionName, String courseId, String feedbackQuestionId, String userEmail)
-            throws EntityDoesNotExistException {
-
-        FeedbackSessionAttributes fsa = fsDb.getFeedbackSession(
-                courseId, feedbackSessionName);
-        
-        if (fsa == null) {
-            throw new EntityDoesNotExistException(ERROR_NON_EXISTENT_FS_GET + courseId + "/" + feedbackSessionName);
-        }
-        
-        StudentAttributes student = studentsLogic.getStudentForEmail(courseId, userEmail);
-        if (student == null) {
-            throw new EntityDoesNotExistException(ERROR_NON_EXISTENT_STUDENT);
-        }
-
-        Map<FeedbackQuestionAttributes, List<FeedbackResponseAttributes>> bundle =
-                new HashMap<FeedbackQuestionAttributes, List<FeedbackResponseAttributes>>();
-        Map<String, Map<String, String>> recipientList = new HashMap<String, Map<String, String>>();
-
-        FeedbackQuestionAttributes question = fqLogic.getFeedbackQuestion(feedbackQuestionId);
-
-        Set<String> hiddenInstructorEmails = null;
-
-        if (question.getRecipientType() == FeedbackParticipantType.INSTRUCTORS) {
-            hiddenInstructorEmails = getHiddenInstructorEmails(courseId);
-        }
-
-        updateBundleAndRecipientListWithResponsesForStudent(userEmail, student,
-                bundle, recipientList, question, hiddenInstructorEmails);
-
-        return new FeedbackSessionQuestionsBundle(fsa, bundle, recipientList);
-    }
 
     private void updateBundleAndRecipientListWithResponsesForStudent(
             String userEmail,
@@ -1133,20 +1099,6 @@ public class FeedbackSessionsLogic {
 
     public boolean isFeedbackSessionExists(String feedbackSessionName, String courseId) {
         return fsDb.getFeedbackSession(courseId, feedbackSessionName) != null;
-    }
-
-    public boolean isFeedbackSessionHasQuestionForStudents(
-            String feedbackSessionName,
-            String courseId) throws EntityDoesNotExistException {
-        if (!isFeedbackSessionExists(feedbackSessionName, courseId)) {
-            throw new EntityDoesNotExistException(ERROR_NON_EXISTENT_FS_CHECK + courseId + "/" + feedbackSessionName);
-        }
-
-        List<FeedbackQuestionAttributes> allQuestions =
-                fqLogic.getFeedbackQuestionsForStudents(feedbackSessionName,
-                        courseId);
-
-        return !allQuestions.isEmpty();
     }
 
     public boolean isFeedbackSessionCompletedByStudent(FeedbackSessionAttributes fsa,
